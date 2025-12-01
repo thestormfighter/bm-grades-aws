@@ -34,7 +34,7 @@ export default function PromotionStatus({ promotionStatus, title = "État de Pro
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Condition 1: Moyenne générale */}
+        {/* Condition 1: Overall average */}
         <div className={`border-2 rounded-lg p-4 ${getStatusColor(conditions.averageOk)}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Moyenne générale</span>
@@ -49,7 +49,7 @@ export default function PromotionStatus({ promotionStatus, title = "État de Pro
           </div>
         </div>
 
-        {/* Condition 2: Déficit total */}
+        {/* Condition 2: Total deficit */}
         <div className={`border-2 rounded-lg p-4 ${getStatusColor(conditions.deficitOk)}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Déficit total</span>
@@ -64,7 +64,7 @@ export default function PromotionStatus({ promotionStatus, title = "État de Pro
           </div>
         </div>
 
-        {/* Condition 3: Notes insuffisantes */}
+        {/* Condition 3: Insufficient grades */}
         <div className={`border-2 rounded-lg p-4 ${getStatusColor(conditions.insufficientOk)}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Notes insuffisantes</span>

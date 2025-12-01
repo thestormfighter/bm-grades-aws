@@ -12,10 +12,10 @@ import { storage } from './utils';
 import './styles/App.css';
 
 export default function BMGradeCalculator() {
-  // Auth obligatoire
+  // Mandatory auth
   const { user, authLoading } = useAuth();
   
-  // ============ État de l'application ============
+  // ============ Application state ============
   const [bmType, setBmType] = useState('TAL');
   const [currentSemester, setCurrentSemester] = useState(1);
   const [subjects, setSubjects] = useState({});
@@ -30,16 +30,16 @@ export default function BMGradeCalculator() {
   const [showSemesterPrompt, setShowSemesterPrompt] = useState(false);
   const tabBarRef = useRef(null);
 
-  // Gestion des notes Supabase
+  // Supabase grades management
   const { grades, loading: gradesLoading, error: gradesError, add: addGradeRemote, remove: removeGradeRemote } = useSupabaseGrades(user);
   
-  // Gestion des notes semestrielles Supabase
+  // Supabase semester grades management
   const { semesterGrades: supabaseSemesterGrades, loading: semesterGradesLoading, upsert: upsertSemesterGrade } = useSupabaseSemesterGrades(user);
 
-  // ============ Hooks personnalisés ============
+  // ============ Custom hooks ============
   const validSubjects = new Set(Object.keys(LEKTIONENTAFEL[bmType] || {}));
   
-  // Chargement des données au démarrage
+  // Load data on startup
   useLoadData({
     setSubjects,
     setSemesterGrades,
@@ -50,7 +50,7 @@ export default function BMGradeCalculator() {
     setMaturnoteGoal
   });
 
-  // Sauvegarde automatique
+  // Auto-save
   useSaveData({
     subjects,
     semesterGrades,
@@ -61,7 +61,7 @@ export default function BMGradeCalculator() {
     maturnoteGoal
   });
 
-  // Fonction pour ajouter un contrôle (définie avant useBulletinAnalysis)
+  // Function to add an assessment (defined before useBulletinAnalysis)
   const addControlToSupabase = async (subject, grade, weight, date = null, name = null) => {
     try {
       const { getOrCreateSubject } = await import('./services/subjectService');
@@ -79,11 +79,11 @@ export default function BMGradeCalculator() {
         date: date
       });
     } catch (error) {
-      console.error('Erreur ajout contrôle Supabase:', error);
+      console.error('Error adding assessment to Supabase:', error);
     }
   };
 
-  // Fonction pour sauvegarder les notes de bulletin dans Supabase
+  // Function to save bulletin grades to Supabase
   const saveBulletinToSupabase = async (subjectName, semester, grade) => {
     try {
       const { getOrCreateSubject } = await import('./services/subjectService');
@@ -95,11 +95,11 @@ export default function BMGradeCalculator() {
         grade: parseFloat(grade)
       });
     } catch (error) {
-      console.error('Erreur sauvegarde bulletin Supabase:', error);
+      console.error('Error saving bulletin to Supabase:', error);
     }
   };
 
-  // Analyse de bulletins
+  // Bulletin analysis
   const {
     isAnalyzing,
     analysisResult,
@@ -116,7 +116,7 @@ export default function BMGradeCalculator() {
     saveBulletinToSupabase
   );
 
-  // Calculs
+  // Calculations
   const calculations = useGradeCalculations(
     subjects,
     semesterGrades,
@@ -125,7 +125,7 @@ export default function BMGradeCalculator() {
     bmType
   );
 
-  // Réinitialiser l'analyse lors du changement d'onglet
+  // Reset analysis when tab changes
   useEffect(() => {
     resetAnalysis();
   }, [activeTab]);
@@ -144,7 +144,7 @@ export default function BMGradeCalculator() {
     return () => window.removeEventListener('resize', updateHint);
   }, [activeTab]);
 
-  // Synchroniser les grades Supabase avec le state local
+  // Synchronize Supabase grades with local state
   useEffect(() => {
     if (!grades || grades.length === 0) return;
     
@@ -170,27 +170,27 @@ export default function BMGradeCalculator() {
     setSubjects(newSubjects);
   }, [grades]);
 
-  // Synchroniser les semester_grades Supabase avec le state local
+  // Synchronize Supabase semester_grades with local state
   useEffect(() => {
     if (!supabaseSemesterGrades || Object.keys(supabaseSemesterGrades).length === 0) return;
     setSemesterGrades(supabaseSemesterGrades);
   }, [supabaseSemesterGrades]);
 
-  // Réinitialiser settingsOpen quand l'utilisateur se déconnecte
+  // Reset settingsOpen when user logs out
   useEffect(() => {
     if (!user) {
       setSettingsOpen(false);
     }
   }, [user]);
 
-  // Vérifier si on doit afficher le prompt de semestre
+  // Check if semester prompt should be displayed
   useEffect(() => {
     if (user && !authLoading) {
-      // Vérifier si un semestre est déjà sauvegardé
+      // Check if a semester is already saved
       const savedSemester = storage.get('currentSemester');
       const data = storage.get('bm-calculator-data');
       
-      // Si ni semestre sauvegardé ni données, afficher le prompt
+      // If neither semester saved nor data, display prompt
       if (!savedSemester && (!data || !data.currentSemester)) {
         setShowSemesterPrompt(true);
       }
@@ -203,9 +203,9 @@ export default function BMGradeCalculator() {
     setShowSemesterPrompt(false);
   };
 
-  // Rendu conditionnel après tous les hooks
+  // Conditional rendering after all hooks
   if (authLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-xl">Chargement...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-xl">Loading...</div>;
   }
   if (!user) {
     return (
@@ -217,22 +217,22 @@ export default function BMGradeCalculator() {
     );
   }
 
-  // Afficher le prompt de semestre si nécessaire
+  // Display semester prompt if necessary
   if (showSemesterPrompt) {
     return <SemesterPrompt onSelectSemester={handleSemesterSelect} />;
   }
 
-  // ============ Fonctions de gestion ============
-  // Ajout/Suppression de notes via Supabase
+  // ============ Management functions ============
+  // Add/Delete grades via Supabase
   const addGrade = async (subject, grade, weight, date = null, name = null) => {
     try {
-      // Importer dynamiquement le service
+      // Dynamically import service
       const { getOrCreateSubject } = await import('./services/subjectService');
       
-      // Obtenir ou créer la matière
+      // Get or create subject
       const subjectData = await getOrCreateSubject(subject);
       
-      // Conversion du format local vers format Supabase
+      // Convert local format to Supabase format
       let parsedWeight;
       if (typeof weight === 'string') {
         if (weight.includes('/')) {
@@ -257,11 +257,11 @@ export default function BMGradeCalculator() {
         date: date
       });
       
-      // Mettre à jour le state local avec le grade retourné par Supabase
+      // Update local state with the grade returned by Supabase
       if (newGrade) {
         setSubjects(prev => {
           const existing = prev[subject] || [];
-          // Éviter les doublons
+          // Avoid duplicates
           const isDuplicate = existing.some(g => g.id === newGrade.id);
           
           if (isDuplicate) return prev;
@@ -281,20 +281,20 @@ export default function BMGradeCalculator() {
         });
       }
     } catch (error) {
-      console.error('Erreur ajout grade:', error);
+      console.error('Error adding grade:', error);
     }
   };
 
   const removeGrade = async (subject, gradeId) => {
     try {
       await removeGradeRemote(gradeId);
-      // Mettre à jour le state local aussi
+      // Also update local state
       setSubjects(prev => ({
         ...prev,
         [subject]: (prev[subject] || []).filter(g => g.id !== gradeId)
       }));
     } catch (error) {
-      console.error('Erreur suppression grade:', error);
+      console.error('Error deleting grade:', error);
     }
   };
 
@@ -339,7 +339,7 @@ export default function BMGradeCalculator() {
     const all = [...baseGrades, ...planned];
     if (all.length === 0) return null;
     
-    // Convertir l'objectif arrondi en objectif réel (ex: 6 -> 5.75, 5 -> 4.75)
+    // Convert rounded goal to real goal (e.g.: 6 -> 5.75, 5 -> 4.75)
     const realTarget = targetAverage - 0.25;
     
     const currentTotalWeight = all.reduce((sum, g) => sum + g.weight, 0);
@@ -348,7 +348,7 @@ export default function BMGradeCalculator() {
     return Math.round(required * 10) / 10;
   };
 
-  // ============ Données pour les graphiques ============
+  // ============ Data for charts ============
   const getChartData = () => {
     const allSubjects = [
       ...BM_SUBJECTS[bmType].grundlagen,
@@ -419,7 +419,7 @@ export default function BMGradeCalculator() {
           <AuthPanel onSettingsToggle={setSettingsOpen} />
         </div>
 
-        {/* Contenu principal masqué si paramètres ouverts */}
+        {/* Main content hidden if settings open */}
         {!settingsOpen && (
           <>
         {/* Header */}
@@ -575,7 +575,7 @@ export default function BMGradeCalculator() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Semestre Actuel (S{currentSemester})</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   {currentSemesterSubjects.map(subject => {
-                    // Utiliser les notes du state local (subjects) qui contient les détails
+                    // Use grades from local state (subjects) which contains the details
                     const subjectGrades = subjects[subject] || [];
                     return (
                       <GradeCard
@@ -711,7 +711,7 @@ export default function BMGradeCalculator() {
                   const erfahrungsnote = calculations.getErfahrungsnote(subject);
                   const examGrade = examSimulator[subject];
                   const maturnote = calculations.getExamAverage(subject);
-                  // Utiliser directement l'objectif entré (au dixième)
+                  // Use the entered goal directly (to the tenth)
                   const requiredExam = calculations.getRequiredExamGrade(subject, maturnoteGoal);
                   
                   return (
