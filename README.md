@@ -1,36 +1,36 @@
 # BM Grades Calculator
 
-Application de calcul et de suivi des notes pour la Berufsmaturität (BM).
+Application for calculating and tracking grades for the Berufsmaturität (BM).
 
-## 📁 Structure du Projet
+## 📁 Project Structure
 
 ```
 bm-grades/
-├── public/                 # Fichiers statiques publics
-│   └── assets/            # Images et ressources
+├── public/                 # Public static files
+│   └── assets/            # Images and resources
 │       └── react.svg
 │
 ├── src/
-│   ├── constants/         # Constantes et configurations
-│   │   ├── index.js      # Exports centralisés
-│   │   └── subjects.js   # Matières BM, examens, lektionentafel
+│   ├── constants/         # Constants and configurations
+│   │   ├── index.js      # Centralized exports
+│   │   └── subjects.js   # BM subjects, exams, lektionentafel
 │   │
-│   ├── features/          # Fonctionnalités par domaine
-│   │   └── calculator/   # Calculateur de notes
+│   ├── features/          # Features by domain
+│   │   └── calculator/   # Grades calculator
 │   │       ├── components/
 │   │       └── hooks/
 │   │
-│   ├── styles/           # Styles CSS globaux
+│   ├── styles/           # Global CSS styles
 │   │   ├── App.css
 │   │   └── index.css
 │   │
-│   ├── utils/            # Fonctions utilitaires
+│   ├── utils/            # Utility functions
 │   │   ├── index.js
-│   │   ├── storage.js    # Gestion localStorage
-│   │   └── grades.js     # Calculs de notes
+│   │   ├── storage.js    # localStorage management
+│   │   └── grades.js     # Grade calculations
 │   │
-│   ├── App.jsx           # Composant principal
-│   └── main.jsx          # Point d'entrée
+│   ├── App.jsx           # Main component
+│   └── main.jsx          # Entry point
 │
 ├── index.html
 ├── package.json
@@ -39,40 +39,40 @@ bm-grades/
 └── README.md
 ```
 
-## 🚀 Démarrage
+## 🚀 Getting Started
 
 ```bash
-# Installation des dépendances
+# Install dependencies
 npm install
 
-# Développement
+# Development
 npm run dev
 
-# Build production
+# Production build
 npm run build
 
-# Aperçu production
+# Production preview
 npm run preview
 ```
 
-## 📚 Organisation des Dossiers
+## 📚 Folder Organization
 
 ### `/src/constants`
-Contient toutes les constantes de configuration : matières BM, examens, lektionentafel.
+Contains all configuration constants: BM subjects, exams, lektionentafel.
 
 ### `/src/features`
-Organisation par fonctionnalité avec composants, hooks et logique métier.
+Organization by feature with components, hooks, and business logic.
 
 ### `/src/utils`
-Fonctions utilitaires réutilisables (calculs, storage, formatage).
+Reusable utility functions (calculations, storage, formatting).
 
 ### `/src/styles`
-Styles CSS globaux et configuration Tailwind.
+Global CSS styles and Tailwind configuration.
 
 ## 🛠️ Technologies
 
 - React 19
 - Vite 7
 - Tailwind CSS
-- Recharts (graphiques)
-- Lucide React (icônes)
+- Recharts (charts)
+- Lucide React (icons)
