@@ -3,17 +3,20 @@ import { Book, Calculator, TrendingUp, BarChart, Target } from 'lucide-react';
 import {LineChart, Line, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BM_SUBJECTS, EXAM_SUBJECTS, LEKTIONENTAFEL } from './constants';
 import { GradeCard, SemesterSimulatorCard, BulletinAnalysis, PromotionStatus } from './components';
-import { useLoadData, useSaveData, useGradeCalculations, useBulletinAnalysis, useAuth, useSupabaseSemesterGrades } from './hooks';
-import { useSupabaseGrades } from './hooks/useSupabaseGrades';
+import { useLoadData, useSaveData, useGradeCalculations, useBulletinAnalysis /*, useAuth, useSupabaseSemesterGrades */ } from './hooks';
+// import { useSupabaseGrades } from './hooks/useSupabaseGrades';
 import AuthPanel from './components/AuthPanel';
 import SemesterPrompt from './components/SemesterPrompt';
-import { roundToHalfOrWhole } from './services';
 import { storage } from './utils';
 import './styles/App.css';
 
 export default function BMGradeCalculator() {
   // Mandatory auth
-  const { user, authLoading } = useAuth();
+  // const { user, authLoading } = useAuth();
+  // eslint-disable-next-line no-unused-vars
+  const user = null; // Temporarily disabled auth
+  // eslint-disable-next-line no-unused-vars
+  const authLoading = false; // Temporarily disabled auth
   
   // ============ Application state ============
   const [bmType, setBmType] = useState('TAL');
@@ -26,15 +29,27 @@ export default function BMGradeCalculator() {
   const [maturnoteGoal, setMaturnoteGoal] = useState(5.0);
   const [activeTab, setActiveTab] = useState('current');
   const [showScrollHint, setShowScrollHint] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showSemesterPrompt, setShowSemesterPrompt] = useState(false);
   const tabBarRef = useRef(null);
 
   // Supabase grades management
-  const { grades, loading: gradesLoading, error: gradesError, add: addGradeRemote, remove: removeGradeRemote } = useSupabaseGrades(user);
+  // const { grades, loading: gradesLoading, error: gradesError, add: addGradeRemote, remove: removeGradeRemote } = useSupabaseGrades(user);
+  const grades = React.useMemo(() => [], []); // Temporarily disabled
+  // eslint-disable-next-line no-unused-vars
+  const gradesLoading = false; // Temporarily disabled
+  // eslint-disable-next-line no-unused-vars
+  const gradesError = null; // Temporarily disabled
+  const addGradeRemote = async () => {}; // Temporarily disabled
+  const removeGradeRemote = async () => {}; // Temporarily disabled
   
   // Supabase semester grades management
-  const { semesterGrades: supabaseSemesterGrades, loading: semesterGradesLoading, upsert: upsertSemesterGrade } = useSupabaseSemesterGrades(user);
+  // const { semesterGrades: supabaseSemesterGrades, loading: semesterGradesLoading, upsert: upsertSemesterGrade } = useSupabaseSemesterGrades(user);
+  const supabaseSemesterGrades = React.useMemo(() => ({}), []); // Temporarily disabled
+  // eslint-disable-next-line no-unused-vars
+  const semesterGradesLoading = false; // Temporarily disabled
+  const upsertSemesterGrade = async () => {}; // Temporarily disabled
 
   // ============ Custom hooks ============
   const validSubjects = new Set(Object.keys(LEKTIONENTAFEL[bmType] || {}));
@@ -128,7 +143,7 @@ export default function BMGradeCalculator() {
   // Reset analysis when tab changes
   useEffect(() => {
     resetAnalysis();
-  }, [activeTab]);
+  }, [activeTab, resetAnalysis]);
 
   // Detect if tab bar overflows (requires horizontal scroll)
   useEffect(() => {
@@ -177,15 +192,15 @@ export default function BMGradeCalculator() {
   }, [supabaseSemesterGrades]);
 
   // Reset settingsOpen when user logs out
-  useEffect(() => {
-    if (!user) {
-      setSettingsOpen(false);
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (!user) {
+  //     setSettingsOpen(false);
+  //   }
+  // }, [user]);
 
   // Check if semester prompt should be displayed
   useEffect(() => {
-    if (user && !authLoading) {
+    // if (user && !authLoading) {
       // Check if a semester is already saved
       const savedSemester = storage.get('currentSemester');
       const data = storage.get('bm-calculator-data');
@@ -194,8 +209,8 @@ export default function BMGradeCalculator() {
       if (!savedSemester && (!data || !data.currentSemester)) {
         setShowSemesterPrompt(true);
       }
-    }
-  }, [user, authLoading]);
+    // }
+  }, [] /*[user, authLoading]*/);
 
   const handleSemesterSelect = (semester) => {
     setCurrentSemester(semester);
@@ -204,18 +219,18 @@ export default function BMGradeCalculator() {
   };
 
   // Conditional rendering after all hooks
-  if (authLoading) {
-    return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-xl">Loading...</div>;
-  }
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="w-full">
-          <AuthPanel onSettingsToggle={setSettingsOpen} />
-        </div>
-      </div>
-    );
-  }
+  // if (authLoading) {
+  //   return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-xl">Loading...</div>;
+  // }
+  // if (!user) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+  //       <div className="w-full">
+  //         <AuthPanel onSettingsToggle={setSettingsOpen} />
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // Display semester prompt if necessary
   if (showSemesterPrompt) {
@@ -359,7 +374,7 @@ export default function BMGradeCalculator() {
     
     return allSubjects.map(subject => {
       const erfahrungsnote = calculations.getErfahrungsnote(subject);
-      const exam = examSimulator[subject];
+      // const exam = examSimulator[subject];
       const maturnote = EXAM_SUBJECTS[bmType].includes(subject) 
         ? calculations.getExamAverage(subject)
         : erfahrungsnote;
@@ -415,9 +430,9 @@ export default function BMGradeCalculator() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-2 sm:px-4">
         {/* Auth Panel */}
-        <div className="pt-4">
+        {/* <div className="pt-4">
           <AuthPanel onSettingsToggle={setSettingsOpen} />
-        </div>
+        </div> */}
 
         {/* Main content hidden if settings open */}
         {!settingsOpen && (
@@ -426,12 +441,12 @@ export default function BMGradeCalculator() {
         <header className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <h1 className="text-3xl font-bold text-indigo-900 mb-4 flex items-center gap-3">
             <Book className="w-8 h-8" />
-            Calculateur de Notes BM
+            BM Grade Calculator
           </h1>
           
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type de BM</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">BM Type</label>
               <select 
                 value={bmType} 
                 onChange={(e) => setBmType(e.target.value)}
@@ -443,7 +458,7 @@ export default function BMGradeCalculator() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Semestre actuel</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Semester</label>
               <input 
                 type="number" 
                 min="1" 
@@ -462,7 +477,7 @@ export default function BMGradeCalculator() {
             <div className="text-center text-xs text-gray-500 mb-2 select-none">
               <span className="inline-flex items-center gap-1">
                 <svg width="16" height="16" fill="none" viewBox="0 0 16 16" className="inline"><path d="M2 8h12M6 4l-4 4 4 4" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 12l4-4-4-4" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Faites glisser pour voir les autres onglets
+                Scroll to see other tabs
               </span>
             </div>
           )}
@@ -483,7 +498,7 @@ export default function BMGradeCalculator() {
               }`}
             >
               <Calculator className="w-4 h-4 inline mr-2" />
-              Semestre Actuel
+              Current Semester
             </button>
             
             <button
@@ -493,7 +508,7 @@ export default function BMGradeCalculator() {
               }`}
             >
               <Target className="w-4 h-4 inline mr-2" />
-              Simulateur Semestre
+              Semester Simulator
             </button>
 
             <button
@@ -503,7 +518,7 @@ export default function BMGradeCalculator() {
               }`}
             >
               <Book className="w-4 h-4 inline mr-2" />
-              Bulletins Précédents
+              Previous Bulletins
             </button>
 
             <button
@@ -513,7 +528,7 @@ export default function BMGradeCalculator() {
               }`}
             >
               <TrendingUp className="w-4 h-4 inline mr-2" />
-              Examens Finaux
+              Final Exams
             </button>
 
             <button
@@ -523,7 +538,7 @@ export default function BMGradeCalculator() {
               }`}
             >
               <BarChart className="w-4 h-4 inline mr-2" />
-              Graphiques
+              Charts
             </button>
           </div>
 
@@ -532,10 +547,10 @@ export default function BMGradeCalculator() {
             <div>
               <PromotionStatus 
                 promotionStatus={calculations.getSimulatedPromotionStatus()}
-                title="État de Promotion Semestrielle (BM1)"
+                title="Semester Promotion Status (BM1)"
               />
               
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Simulateur de Semestre</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Semester Simulator</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 {currentSemesterSubjects.map(subject => {
                   const currentGrades = subjects[subject] || [];
@@ -572,7 +587,7 @@ export default function BMGradeCalculator() {
                 activeTab={activeTab}
               />
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Semestre Actuel (S{currentSemester})</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Current Semester (S{currentSemester})</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   {currentSemesterSubjects.map(subject => {
                     // Use grades from local state (subjects) which contains the details
@@ -605,7 +620,7 @@ export default function BMGradeCalculator() {
                 activeTab={activeTab}
               />
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Bulletins Précédents</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Previous Bulletins</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   {allSubjects.map(subject => {
                     const semGrades = semesterGrades[subject] || {};
@@ -625,7 +640,7 @@ export default function BMGradeCalculator() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-gray-500 text-sm mb-3">Aucune note semestrielle</p>
+                          <p className="text-gray-500 text-sm mb-3">No semester grades</p>
                         )}
                         
                         {erfahrungsnote && (
@@ -647,16 +662,16 @@ export default function BMGradeCalculator() {
           {/* Exam Tab */}
           {activeTab === 'exam' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Examens Finaux</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Final Exams</h2>
               
               <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-1">Moyenne Générale (Maturnote)</h3>
-                    <p className="text-xs text-gray-600">Moyenne pondérée de toutes les matières d'examen</p>
+                    <h3 className="font-semibold text-blue-900 mb-1">Overall Average (Maturnote)</h3>
+                    <p className="text-xs text-gray-600">Weighted average of all exam subjects</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600">Objectif:</span>
+                    <span className="text-xs text-gray-600">Goal:</span>
                     <input
                       type="number"
                       step="0.1"
@@ -670,7 +685,7 @@ export default function BMGradeCalculator() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Moyenne actuelle</div>
+                    <div className="text-sm text-gray-600 mb-1">Current average</div>
                     <div className={`text-3xl font-bold ${
                       calculations.getOverallAverage() && calculations.getOverallAverage() < 4.0
                         ? 'text-red-700'
@@ -679,7 +694,7 @@ export default function BMGradeCalculator() {
                       {calculations.getOverallAverage()?.toFixed(1) || '-'}
                     </div>
                     {calculations.getOverallAverage() && calculations.getOverallAverage() < 4.0 && (
-                      <div className="text-xs text-red-600 font-semibold mt-1">⚠️ En dessous de 4.0</div>
+                      <div className="text-xs text-red-600 font-semibold mt-1">⚠️ Below 4.0</div>
                     )}
                   </div>
                   {calculations.getOverallAverage() && (
@@ -691,10 +706,10 @@ export default function BMGradeCalculator() {
                           : 'bg-orange-100 text-orange-800'
                     }`}>
                       {calculations.getOverallAverage() < 4.0
-                        ? `⚠️ Dangereux: ${(4.0 - calculations.getOverallAverage()).toFixed(1)} points manquants`
+                        ? `⚠️ Dangerous: ${(4.0 - calculations.getOverallAverage()).toFixed(1)} points missing`
                         : calculations.getOverallAverage() >= maturnoteGoal
-                          ? '✅ Objectif atteint !'
-                          : `📊 ${(maturnoteGoal - calculations.getOverallAverage()).toFixed(1)} points restants`
+                          ? '✅ Goal achieved!'
+                          : `📊 ${(maturnoteGoal - calculations.getOverallAverage()).toFixed(1)} points remaining`
                       }
                     </div>
                   )}
@@ -724,7 +739,7 @@ export default function BMGradeCalculator() {
                           <div className="font-bold text-lg">{erfahrungsnote?.toFixed(1) || '-'}</div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Note requise:</span>
+                          <span className="text-gray-600">Required grade:</span>
                           <div className="font-bold text-lg text-blue-600">
                             {requiredExam?.toFixed(1) || '-'}
                           </div>
@@ -732,7 +747,7 @@ export default function BMGradeCalculator() {
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-xs text-gray-700 mb-1">Note d'examen simulée</label>
+                        <label className="block text-xs text-gray-700 mb-1">Simulated exam grade</label>
                         <input
                           type="number"
                           step="0.5"
@@ -778,11 +793,11 @@ export default function BMGradeCalculator() {
           {/* Charts Tab */}
           {activeTab === 'charts' && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Graphiques et Statistiques</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Charts and Statistics</h2>
               
               {getSubjectProgressData().length > 0 && (
                 <div className="mb-8 bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-xl font-semibold mb-4">Évolution par Semestre</h3>
+                  <h3 className="text-xl font-semibold mb-4">Evolution by Semester</h3>
                   <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={getSubjectProgressData()}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -809,7 +824,7 @@ export default function BMGradeCalculator() {
 
               {getChartData().length > 0 && (
                 <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-xl font-semibold mb-4">Comparaison Erfahrungsnote vs Maturnote</h3>
+                  <h3 className="text-xl font-semibold mb-4">Comparison Erfahrungsnote vs Maturnote</h3>
                   <ResponsiveContainer width="100%" height={400}>
                     <RechartsBarChart data={getChartData()}>
                       <CartesianGrid strokeDasharray="3 3" />
