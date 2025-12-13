@@ -3,20 +3,51 @@ import { Book, Calculator, TrendingUp, BarChart, Target } from 'lucide-react';
 import {LineChart, Line, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BM_SUBJECTS, EXAM_SUBJECTS, LEKTIONENTAFEL } from './constants';
 import { GradeCard, SemesterSimulatorCard, BulletinAnalysis, PromotionStatus } from './components';
-import { useLoadData, useSaveData, useGradeCalculations, useBulletinAnalysis /*, useAuth, useSupabaseSemesterGrades */ } from './hooks';
-// import { useSupabaseGrades } from './hooks/useSupabaseGrades';
-import AuthPanel from './components/AuthPanel';
+import { useLoadData, useSaveData, useGradeCalculations, useBulletinAnalysis } from './hooks';
+import CognitoAuthPanel from './components/CognitoAuthPanel';
 import SemesterPrompt from './components/SemesterPrompt';
 import { storage } from './utils';
-import './styles/App.css';
+import { useAuth as useCognitoAuth } from 'react-oidc-context';
+
+const AuthBackdrop = ({ children, contentClassName = 'w-full max-w-xl' }) => (
+  <div className="relative min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#eef2ff] via-[#fdfbff] to-[#e5e4ff] overflow-hidden">
+    <div className="pointer-events-none absolute inset-0">
+      <div className="absolute -top-12 -right-6 h-64 w-64 rounded-full bg-indigo-200/50 blur-3xl" />
+      <div className="absolute -bottom-16 -left-10 h-72 w-72 rounded-full bg-purple-200/40 blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+    </div>
+    <div className={`relative z-10 ${contentClassName}`}>
+      {children}
+    </div>
+  </div>
+);
+
+const LoadingState = () => (
+  <div className="flex flex-col items-center gap-4 rounded-3xl bg-white/80 px-8 py-10 shadow-2xl backdrop-blur">
+    <div className="h-14 w-14 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" aria-label="Loading" />
+    <div className="text-center">
+      <p className="text-lg font-semibold text-gray-900">Securing your session…</p>
+      <p className="text-sm text-gray-500">This will only take a moment</p>
+    </div>
+    <div className="flex items-center gap-2">
+      {[0, 150, 300].map(delay => (
+        <span
+          key={delay}
+          className="h-2.5 w-2.5 rounded-full bg-indigo-500 animate-bounce"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </div>
+  </div>
+);
 
 export default function BMGradeCalculator() {
-  // Mandatory auth
-  // const { user, authLoading } = useAuth();
-  // eslint-disable-next-line no-unused-vars
-  const user = null; // Temporarily disabled auth
-  // eslint-disable-next-line no-unused-vars
-  const authLoading = false; // Temporarily disabled auth
+  // Cognito authentication
+  const auth = useCognitoAuth();
+  
+  // Map Cognito auth to expected format
+  const user = auth.isAuthenticated ? auth.user : null;
+  const authLoading = auth.isLoading;
   
   // ============ Application state ============
   const [bmType, setBmType] = useState('TAL');
@@ -29,27 +60,8 @@ export default function BMGradeCalculator() {
   const [maturnoteGoal, setMaturnoteGoal] = useState(5.0);
   const [activeTab, setActiveTab] = useState('current');
   const [showScrollHint, setShowScrollHint] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showSemesterPrompt, setShowSemesterPrompt] = useState(false);
   const tabBarRef = useRef(null);
-
-  // Supabase grades management
-  // const { grades, loading: gradesLoading, error: gradesError, add: addGradeRemote, remove: removeGradeRemote } = useSupabaseGrades(user);
-  const grades = React.useMemo(() => [], []); // Temporarily disabled
-  // eslint-disable-next-line no-unused-vars
-  const gradesLoading = false; // Temporarily disabled
-  // eslint-disable-next-line no-unused-vars
-  const gradesError = null; // Temporarily disabled
-  const addGradeRemote = async () => {}; // Temporarily disabled
-  const removeGradeRemote = async () => {}; // Temporarily disabled
-  
-  // Supabase semester grades management
-  // const { semesterGrades: supabaseSemesterGrades, loading: semesterGradesLoading, upsert: upsertSemesterGrade } = useSupabaseSemesterGrades(user);
-  const supabaseSemesterGrades = React.useMemo(() => ({}), []); // Temporarily disabled
-  // eslint-disable-next-line no-unused-vars
-  const semesterGradesLoading = false; // Temporarily disabled
-  const upsertSemesterGrade = async () => {}; // Temporarily disabled
 
   // ============ Custom hooks ============
   const validSubjects = new Set(Object.keys(LEKTIONENTAFEL[bmType] || {}));
@@ -76,43 +88,9 @@ export default function BMGradeCalculator() {
     maturnoteGoal
   });
 
-  // Function to add an assessment (defined before useBulletinAnalysis)
-  const addControlToSupabase = async (subject, grade, weight, date = null, name = null) => {
-    try {
-      const { getOrCreateSubject } = await import('./services/subjectService');
-      const subjectData = await getOrCreateSubject(subject);
-      
-      let parsedWeight = typeof weight === 'number' ? weight : parseFloat(weight);
-      
-      await addGradeRemote({
-        subject_id: subjectData.id,
-        semester_number: currentSemester,
-        grade: parseFloat(grade),
-        weight: parsedWeight,
-        control_name: name,
-        source: 'SAL',
-        date: date
-      });
-    } catch (error) {
-      console.error('Error adding assessment to Supabase:', error);
-    }
-  };
-
-  // Function to save bulletin grades to Supabase
-  const saveBulletinToSupabase = async (subjectName, semester, grade) => {
-    try {
-      const { getOrCreateSubject } = await import('./services/subjectService');
-      const subjectData = await getOrCreateSubject(subjectName);
-      
-      await upsertSemesterGrade({
-        subject_id: subjectData.id,
-        semester_number: semester,
-        grade: parseFloat(grade)
-      });
-    } catch (error) {
-      console.error('Error saving bulletin to Supabase:', error);
-    }
-  };
+  // Placeholder hooks for future persistence integration
+  const addControlToSupabase = async () => {};
+  const saveBulletinToSupabase = async () => {};
 
   // Bulletin analysis
   const {
@@ -159,58 +137,17 @@ export default function BMGradeCalculator() {
     return () => window.removeEventListener('resize', updateHint);
   }, [activeTab]);
 
-  // Synchronize Supabase grades with local state
-  useEffect(() => {
-    if (!grades || grades.length === 0) return;
-    
-    const newSubjects = {};
-    grades.forEach(g => {
-      const subjectName = g.subject_name;
-      if (!subjectName) return;
-      
-      if (!newSubjects[subjectName]) {
-        newSubjects[subjectName] = [];
-      }
-      
-      newSubjects[subjectName].push({
-        id: g.id,
-        grade: parseFloat(g.grade),
-        weight: parseFloat(g.weight),
-        displayWeight: g.weight.toString(),
-        date: g.date,
-        name: g.control_name
-      });
-    });
-    
-    setSubjects(newSubjects);
-  }, [grades]);
-
-  // Synchronize Supabase semester_grades with local state
-  useEffect(() => {
-    if (!supabaseSemesterGrades || Object.keys(supabaseSemesterGrades).length === 0) return;
-    setSemesterGrades(supabaseSemesterGrades);
-  }, [supabaseSemesterGrades]);
-
-  // Reset settingsOpen when user logs out
-  // useEffect(() => {
-  //   if (!user) {
-  //     setSettingsOpen(false);
-  //   }
-  // }, [user]);
-
   // Check if semester prompt should be displayed
   useEffect(() => {
-    // if (user && !authLoading) {
-      // Check if a semester is already saved
+    if (user && !authLoading) {
       const savedSemester = storage.get('currentSemester');
       const data = storage.get('bm-calculator-data');
       
-      // If neither semester saved nor data, display prompt
       if (!savedSemester && (!data || !data.currentSemester)) {
         setShowSemesterPrompt(true);
       }
-    // }
-  }, [] /*[user, authLoading]*/);
+    }
+  }, [user, authLoading]);
 
   const handleSemesterSelect = (semester) => {
     setCurrentSemester(semester);
@@ -219,18 +156,20 @@ export default function BMGradeCalculator() {
   };
 
   // Conditional rendering after all hooks
-  // if (authLoading) {
-  //   return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center text-xl">Loading...</div>;
-  // }
-  // if (!user) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-  //       <div className="w-full">
-  //         <AuthPanel onSettingsToggle={setSettingsOpen} />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (authLoading) {
+    return (
+      <AuthBackdrop contentClassName="w-full max-w-sm">
+        <LoadingState />
+      </AuthBackdrop>
+    );
+  }
+  if (!user) {
+    return (
+      <AuthBackdrop>
+        <CognitoAuthPanel />
+      </AuthBackdrop>
+    );
+  }
 
   // Display semester prompt if necessary
   if (showSemesterPrompt) {
@@ -238,79 +177,27 @@ export default function BMGradeCalculator() {
   }
 
   // ============ Management functions ============
-  // Add/Delete grades via Supabase
-  const addGrade = async (subject, grade, weight, date = null, name = null) => {
-    try {
-      // Dynamically import service
-      const { getOrCreateSubject } = await import('./services/subjectService');
-      
-      // Get or create subject
-      const subjectData = await getOrCreateSubject(subject);
-      
-      // Convert local format to Supabase format
-      let parsedWeight;
-      if (typeof weight === 'string') {
-        if (weight.includes('/')) {
-          const [num, den] = weight.split('/').map(n => parseFloat(n.trim()));
-          parsedWeight = num / den;
-        } else if (weight.includes('%')) {
-          parsedWeight = parseFloat(weight.replace('%', '').trim()) / 100;
-        } else {
-          parsedWeight = parseFloat(weight);
-        }
-      } else {
-        parsedWeight = parseFloat(weight);
-      }
-      
-      const newGrade = await addGradeRemote({
-        subject_id: subjectData.id,
-        semester_number: currentSemester,
-        grade: parseFloat(grade),
-        weight: parsedWeight,
-        control_name: name,
-        source: name ? 'SAL' : 'manual',
-        date: date
-      });
-      
-      // Update local state with the grade returned by Supabase
-      if (newGrade) {
-        setSubjects(prev => {
-          const existing = prev[subject] || [];
-          // Avoid duplicates
-          const isDuplicate = existing.some(g => g.id === newGrade.id);
-          
-          if (isDuplicate) return prev;
-          
-          return {
-            ...prev,
-            [subject]: [...existing, {
-              id: newGrade.id,
-              grade: parseFloat(newGrade.grade),
-              weight: parseFloat(newGrade.weight),
-              displayWeight: newGrade.weight.toString(),
-              date: newGrade.date,
-              name: newGrade.control_name,
-              subject_name: subject
-            }]
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error adding grade:', error);
-    }
+  const addGrade = (subject, grade, weight, date = null, name = null) => {
+    const newGrade = {
+      id: Date.now(),
+      grade: parseFloat(grade),
+      weight: parseFloat(weight),
+      displayWeight: weight.toString(),
+      date: date,
+      name: name
+    };
+    
+    setSubjects(prev => ({
+      ...prev,
+      [subject]: [...(prev[subject] || []), newGrade]
+    }));
   };
 
-  const removeGrade = async (subject, gradeId) => {
-    try {
-      await removeGradeRemote(gradeId);
-      // Also update local state
-      setSubjects(prev => ({
-        ...prev,
-        [subject]: (prev[subject] || []).filter(g => g.id !== gradeId)
-      }));
-    } catch (error) {
-      console.error('Error deleting grade:', error);
-    }
+  const removeGrade = (subject, gradeId) => {
+    setSubjects(prev => ({
+      ...prev,
+      [subject]: (prev[subject] || []).filter(g => g.id !== gradeId)
+    }));
   };
 
   const addPlannedControl = (subject, grade, weight) => {
@@ -427,16 +314,8 @@ export default function BMGradeCalculator() {
 
   // ============ Render ============
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-[#f8f9ff] via-white to-[#eef2ff] py-10 px-3">
       <div className="max-w-7xl mx-auto px-2 sm:px-4">
-        {/* Auth Panel */}
-        {/* <div className="pt-4">
-          <AuthPanel onSettingsToggle={setSettingsOpen} />
-        </div> */}
-
-        {/* Main content hidden if settings open */}
-        {!settingsOpen && (
-          <>
         {/* Header */}
         <header className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <h1 className="text-3xl font-bold text-indigo-900 mb-4 flex items-center gap-3">
@@ -855,8 +734,6 @@ export default function BMGradeCalculator() {
             </div>
           )}
         </div>
-        </>
-        )}
       </div>
     </div>
   );
