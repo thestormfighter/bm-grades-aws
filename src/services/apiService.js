@@ -2,7 +2,9 @@
  * Service API pour l'analyse des bulletins et screenshots SAL
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://ec2-18-207-154-148.compute-1.amazonaws.com:3001';
+import { FRONTEND_CONFIG } from '../../config.js';
+
+const API_URL = FRONTEND_CONFIG.API_URL;
 
 /**
  * Convertit un fichier en base64

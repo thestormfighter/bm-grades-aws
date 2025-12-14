@@ -1,16 +1,17 @@
 import mysql from "mysql2/promise";
 import "dotenv/config";
+import { BACKEND_CONFIG } from "../config.js";
 
 const pool = mysql.createPool({
-  host: process.env.RDS_HOST,
-  user: process.env.RDS_USER,
-  password: process.env.RDS_PASSWORD,
-  database: process.env.RDS_DATABASE,
-  port: process.env.RDS_PORT || 3306,
+  host: BACKEND_CONFIG.DATABASE.host,
+  user: BACKEND_CONFIG.DATABASE.user,
+  password: BACKEND_CONFIG.DATABASE.password,
+  database: BACKEND_CONFIG.DATABASE.database,
+  port: BACKEND_CONFIG.DATABASE.port,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: { rejectUnauthorized: false } // MySQL RDS nécessite TLS implicite
+  ssl: BACKEND_CONFIG.DATABASE.ssl
 });
 
 export async function testConnection() {

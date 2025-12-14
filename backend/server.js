@@ -4,19 +4,17 @@ import fetch from "node-fetch";
 import "dotenv/config";
 import { testConnection } from "./db.js";
 import routes from "./routes.js";
+import { BACKEND_CONFIG, validateConfig } from "../config.js";
+
+validateConfig();
 
 const app = express();
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'ec2-18-207-154-148.compute-1.amazonaws.com',
-    /\.amplifyapp\.com$/  // Allow all Amplify app domains
-  ],
+  origin: BACKEND_CONFIG.CORS_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: BACKEND_CONFIG.MAX_FILE_SIZE }));
 
 // API routes
 app.use('/api', routes);
@@ -139,9 +137,11 @@ app.post("/api/scan", async (req, res) => {
   }
 });
 
-app.listen(3001, '0.0.0.0',async () => {
-  console.log("Backend API running on http://0.0.0.0:3001");
-  console.log("Loaded API key:", process.env.ANTHROPIC_API_KEY ? `✅ (starts with ${process.env.ANTHROPIC_API_KEY.substring(0, 10)}...)` : "❌ MISSING");
+app.listen(BACKEND_CONFIG.PORT, BACKEND_CONFIG.HOST, async () => {
+  console.log(`Backend API running on http://${BACKEND_CONFIG.HOST}:${BACKEND_CONFIG.PORT}`);
+  console.log("Environment:", BACKEND_CONFIG.NODE_ENV);
+  console.log("Loaded API key:", BACKEND_CONFIG.ANTHROPIC_API_KEY ? `✅ (starts with ${BACKEND_CONFIG.ANTHROPIC_API_KEY.substring(0, 10)}...)` : "❌ MISSING");
+  console.log("CORS origins:", BACKEND_CONFIG.CORS_ORIGINS);
   
   // Test database connection
   const dbConnected = await testConnection();

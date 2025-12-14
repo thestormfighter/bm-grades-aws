@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://ec2-54-224-32-168.compute-1.amazonaws.com:3001/api';
+import { FRONTEND_CONFIG } from '../../config.js';
+
+const API_BASE = `${FRONTEND_CONFIG.API_URL}/api`;
 
 // ============================================
 // USERS
